@@ -23,6 +23,7 @@
   --accent:#d9606a; --accent-ink:#15171c; --ok:#5fb89f; --warn:#e0954a; --shadow:rgba(0,0,0,.5); color-scheme:dark}
 
 *{box-sizing:border-box}
+[hidden]{display:none!important}
 body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 var(--f-body)}
 .wrap{max-width:1560px;margin:0 auto;padding-block:20px 40px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:16px}
 button,select,input,textarea{font:inherit;color:inherit}
@@ -562,7 +563,8 @@ function stickerDoc(cards){
     return'<div class="st" style="--c:'+e.c+'"><div class="hd"><span>'+esc(c.epic)+' · '+esc(e.n)+'</span><span>'+esc(c.id)+'</span></div><div class="t">'+esc(c.title)+'</div>'+
     '<div class="ft"><span class="o">'+esc(own(c.owner))+'</span><span class="s">'+(c.sprint?'Sprint '+c.sprint:'No sprint')+'</span><span class="p">'+c.pts+'</span><span class="bx"></span></div></div>'};
   return'<!doctype html><html><head><meta charset="utf-8"><title>Sticker sheet</title><style>'+
-  '@page{size:A4;margin:0}*{box-sizing:border-box}body{margin:0;background:#ddd;font-family:"Segoe UI",Arial,sans-serif;color:#15171c;-webkit-print-color-adjust:exact;print-color-adjust:exact}'+
+  '@page{size:A4;margin:0}*{box-sizing:border-box}
+[hidden]{display:none!important}body{margin:0;background:#ddd;font-family:"Segoe UI",Arial,sans-serif;color:#15171c;-webkit-print-color-adjust:exact;print-color-adjust:exact}'+
   '.note{font:13px/1.4 sans-serif;padding:10px 16px;background:#fff}@media print{.note{display:none}body{background:#fff}}'+
   '.sheet{width:210mm;height:297mm;margin:0 auto 8px;background:#fff;display:grid;grid-template-columns:repeat(3,70mm);grid-template-rows:repeat(8,37mm);overflow:hidden;page-break-after:always;break-after:page}'+
   '.st{width:70mm;height:37mm;border:.2mm dashed #aaa;padding:0 0 2.5mm;display:flex;flex-direction:column;overflow:hidden}'+
@@ -579,7 +581,8 @@ function wallDoc(){
   const colsHd=[['To do',''],['Doing','Max 3 each'],['Review',''],['Done','']];
   const legend=Object.entries(EPICS).map(([k,e])=>'<span class="lg"><b style="background:'+e.c+'">'+k+'</b>'+esc(e.n)+'</span>').join('');
   return'<!doctype html><html><head><meta charset="utf-8"><title>Wall board</title><style>'+
-  '@page{size:A3 landscape;margin:0}*{box-sizing:border-box}body{margin:0;font-family:"Segoe UI",Arial,sans-serif;color:#15171c;background:#ccc;-webkit-print-color-adjust:exact;print-color-adjust:exact}'+
+  '@page{size:A3 landscape;margin:0}*{box-sizing:border-box}
+[hidden]{display:none!important}body{margin:0;font-family:"Segoe UI",Arial,sans-serif;color:#15171c;background:#ccc;-webkit-print-color-adjust:exact;print-color-adjust:exact}'+
   '.note{font:13px/1.4 sans-serif;padding:10px 16px;background:#fff}@media print{.note{display:none}body{background:#fff}}'+
   '.page{width:420mm;height:297mm;margin:0 auto;background:#fff;padding:10mm;display:flex;flex-direction:column;gap:5mm}'+
   '.top{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:1.2mm solid #15171c;padding-bottom:3mm}'+
