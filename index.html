@@ -1,0 +1,652 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<title>Anime Shorts Board</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: sticky control header, phase strip, then a five-column wall board of square paper stickers. */
+:root{
+  color-scheme:light;
+  --bg:#e6e7ea; --surface:#f7f7f8; --col:#d9dbe0; --ink:#15171c; --muted:#585e6a; --line:#bfc3cb;
+  --accent:#9b2c35; --accent-ink:#ffffff; --ok:#3f8a74; --warn:#b5651d; --shadow:rgba(21,23,28,.18);
+  --f-display:"Big Shoulders Display","Arial Narrow",Impact,sans-serif;
+  --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#121418; --surface:#1f2228; --col:#181a1f; --ink:#e9eaee; --muted:#9aa1ad; --line:#363a43;
+  --accent:#d9606a; --accent-ink:#15171c; --ok:#5fb89f; --warn:#e0954a; --shadow:rgba(0,0,0,.5); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#121418; --surface:#1f2228; --col:#181a1f; --ink:#e9eaee; --muted:#9aa1ad; --line:#363a43;
+  --accent:#d9606a; --accent-ink:#15171c; --ok:#5fb89f; --warn:#e0954a; --shadow:rgba(0,0,0,.5); color-scheme:dark}
+
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 var(--f-body)}
+.wrap{max-width:1560px;margin:0 auto;padding-block:20px 40px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:16px}
+button,select,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.top{display:flex;flex-wrap:wrap;gap:12px 24px;justify-content:space-between;align-items:flex-end}
+.kicker{font:500 11px var(--f-mono);letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+h1{margin:2px 0 0;font:800 clamp(34px,6vw,56px)/.95 var(--f-display);letter-spacing:.01em;text-transform:uppercase;text-wrap:balance}
+.sync{font:500 11px var(--f-mono);color:var(--muted);display:flex;align-items:center;gap:6px}
+.sync i{width:8px;height:8px;border-radius:50%;background:var(--muted)}
+.sync.live i{background:var(--ok)} .sync.bad i{background:var(--accent)}
+
+.btn{border:1px solid var(--line);background:var(--surface);padding:7px 12px;border-radius:2px;font-weight:500}
+.btn:hover{border-color:var(--ink)}
+.btn.primary{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.btn.danger{border-color:var(--accent);color:var(--accent)}
+.btn.sm{padding:3px 8px;font-size:12px}
+.actions{display:flex;flex-wrap:wrap;gap:8px}
+
+.phases{display:flex;flex-wrap:wrap;gap:10px 18px}
+.phase{display:flex;flex-direction:column;gap:4px;min-width:0}
+.phase h2{margin:0;font:500 10px var(--f-mono);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.cells{display:flex;gap:3px;flex-wrap:wrap}
+.cell{width:30px;height:30px;border:1px solid var(--line);background:var(--surface);font:500 12px var(--f-mono);font-variant-numeric:tabular-nums;padding:0;border-radius:0;position:relative;overflow:hidden}
+.cell span{position:relative}
+.cell::before{content:"";position:absolute;inset:auto 0 0 0;height:var(--p,0%);background:var(--ok);opacity:.35}
+.cell.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.cell.on::before{opacity:.6}
+.cell.all{width:auto;padding:0 10px}
+
+.sprintbar{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:16px;align-items:stretch}
+@media (max-width:820px){.sprintbar{grid-template-columns:minmax(0,1fr)}}
+.panel{background:var(--surface);border:1px solid var(--line);padding:12px 14px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.nav{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.nav select{min-width:0;flex:1 1 180px;padding:6px 8px;background:var(--bg);border:1px solid var(--line);border-radius:2px}
+.goal{font:700 clamp(20px,3vw,28px)/1.1 var(--f-display);text-transform:uppercase;letter-spacing:.02em;text-wrap:balance;margin:0}
+.meta{font:500 12px var(--f-mono);color:var(--muted)}
+.load{display:flex;flex-direction:column;gap:6px}
+.bar{height:10px;background:var(--col);border:1px solid var(--line);position:relative}
+.bar b{position:absolute;inset:0 auto 0 0;background:var(--ink)}
+.bar u{position:absolute;inset:0 auto 0 0;background:var(--ok);text-decoration:none}
+.bar.over b{background:var(--accent)}
+.loadrow{display:flex;flex-wrap:wrap;gap:4px 16px;font:500 12px var(--f-mono);font-variant-numeric:tabular-nums}
+.loadrow .over{color:var(--accent)}
+
+.filters{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.chip{border:1px solid var(--line);background:var(--surface);padding:3px 9px 3px 4px;font-size:12px;display:inline-flex;align-items:center;gap:6px;border-radius:2px}
+.chip .tag{margin:0}
+.chip.on{border-color:var(--ink);box-shadow:inset 0 -2px 0 var(--ink)}
+.filters select{padding:5px 8px;background:var(--surface);border:1px solid var(--line);border-radius:2px}
+
+.boardscroll{overflow-x:auto;padding-bottom:8px}
+.board{display:grid;grid-template-columns:repeat(5,minmax(228px,1fr));gap:10px;align-items:start}
+.col{background:var(--col);border:1px solid var(--line);min-height:340px;display:flex;flex-direction:column}
+.col.over{outline:2px dashed var(--ink);outline-offset:-4px}
+.ch{display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--line)}
+.ch h2{margin:0;font:800 20px/1 var(--f-display);text-transform:uppercase;letter-spacing:.04em;flex:1}
+.ch .n{font:500 11px var(--f-mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.ch.warn .n{color:var(--warn)}
+.stack{display:flex;flex-direction:column;gap:10px;padding:10px;flex:1}
+.empty{border:1px dashed var(--line);color:var(--muted);font-size:12px;padding:14px;text-align:center}
+
+.card{background:var(--surface);border:1px solid var(--line);box-shadow:3px 3px 0 var(--shadow);cursor:grab;display:flex;flex-direction:column;position:relative}
+.card.drag{opacity:.4}
+.card:hover{border-color:var(--ink)}
+.ctop{display:flex;align-items:center;gap:8px;font:500 11px var(--f-mono);color:var(--muted)}
+.tag{display:inline-block;background:var(--ec);color:#fff;font:700 11px var(--f-mono);letter-spacing:.08em;padding:3px 7px;margin:-1px 0 0 -1px}
+.ctop .spr{margin-left:auto;padding-right:8px}
+.card h3{margin:0;padding:8px 10px 6px;font:600 14px/1.3 var(--f-body);overflow-wrap:anywhere}
+.cbot{display:flex;align-items:center;gap:8px;padding:0 10px 9px}
+.own{font:700 11px var(--f-mono);border:1.5px solid var(--ink);border-radius:20px;padding:1px 7px;min-width:24px;text-align:center}
+.pts{font:700 18px/1 var(--f-display);margin-left:auto;font-variant-numeric:tabular-nums;border-bottom:2px solid var(--ink)}
+.note{font-size:11px;color:var(--muted)}
+.adv{border:1px solid var(--line);background:var(--bg);width:28px;height:28px;border-radius:2px;line-height:1;font-size:16px;padding:0}
+.adv:hover{background:var(--ink);color:var(--bg)}
+.done .card h3{text-decoration:line-through;text-decoration-color:var(--muted)}
+
+.stats{display:flex;flex-wrap:wrap;gap:8px 28px}
+.stat{display:flex;align-items:baseline;gap:8px}
+.stat b{font:800 30px/1 var(--f-display);font-variant-numeric:tabular-nums}
+.stat span{font:500 11px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.stat.bad b{color:var(--accent)}
+.tw{overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:640px;font-size:13px}
+th{font:500 11px var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);text-align:left;padding:6px 10px;border-bottom:1px solid var(--ink)}
+td{padding:7px 10px;border-bottom:1px solid var(--line);vertical-align:middle}
+tbody tr{cursor:pointer}tbody tr:hover{background:var(--col)}
+td select{background:var(--bg);border:1px solid var(--line);padding:3px 6px;border-radius:2px}
+td.late{color:var(--accent);font-weight:600}
+td .tag{margin:0 6px 0 0}
+.overlay{position:fixed;inset:0;background:rgba(10,11,14,.55);display:flex;align-items:center;justify-content:center;padding:16px;z-index:50}
+.modal{background:var(--surface);border:1px solid var(--ink);width:min(520px,100%);max-height:100%;overflow:auto;padding:18px;display:flex;flex-direction:column;gap:12px;box-shadow:6px 6px 0 var(--shadow)}
+.modal h2{margin:0;font:800 26px/1 var(--f-display);text-transform:uppercase}
+.fld{display:flex;flex-direction:column;gap:3px;min-width:0}
+.fld label{font:500 11px var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.fld input,.fld select,.fld textarea{background:var(--bg);border:1px solid var(--line);padding:7px 9px;border-radius:2px;width:100%;min-width:0}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.row{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.hint{font-size:12px;color:var(--muted);margin:0}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:8px 14px;font-size:13px;z-index:60}
+@media (prefers-reduced-motion:no-preference){.card{transition:border-color .12s}}
+</style>
+</head><body>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <div class="kicker">Season 1 · vertical shorts · 9:16 · 26 sprints</div>
+      <h1>Anime Shorts Board</h1>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end">
+      <div class="sync" id="sync"><i></i><span>Loading…</span></div>
+      <div class="actions">
+        <button class="btn primary" id="add" type="button">+ Add card</button>
+        <button class="btn" id="dl-stickers" type="button" hidden>Sticker sheet</button>
+        <button class="btn" id="dl-wall" type="button" hidden>Wall board</button>
+        <button class="btn" id="exp" type="button" hidden>Export backup</button><button class="btn" id="imp" type="button" hidden>Import</button><input type="file" id="impf" accept="application/json" hidden>
+        <button class="btn" id="settings" type="button">Settings</button>
+      </div>
+    </div>
+  </header>
+
+  <section class="phases" id="phases" aria-label="Sprint roadmap"></section>
+
+  <section class="sprintbar">
+    <div class="panel">
+      <div class="nav">
+        <button class="btn sm" id="prev" type="button" aria-label="Previous sprint">‹</button>
+        <select id="sel" aria-label="Sprint"></select>
+        <button class="btn sm" id="next" type="button" aria-label="Next sprint">›</button>
+      </div>
+      <p class="goal" id="goal"></p>
+      <div class="meta" id="meta"></div>
+    </div>
+    <div class="panel load" id="load"></div>
+  </section>
+
+  <section class="filters" id="filters"></section>
+
+  <div class="boardscroll"><div class="board" id="board"></div></div>
+
+  <section class="panel" id="mon" aria-label="Outsourcing monitor"></section>
+</div>
+
+<div class="overlay" id="ov" hidden></div>
+<div class="toast" id="toast" hidden></div>
+
+<script src="config.js"></script>
+<script>
+const EPICS={
+  STO:{n:'Story',c:'#9b2c35'},DSN:{n:'Design',c:'#a8650f'},BRD:{n:'Storyboard',c:'#667a22'},
+  ANI:{n:'Animation',c:'#2a6a8a'},BG:{n:'Backgrounds',c:'#2f7a68'},SND:{n:'Sound',c:'#7a4f9a'},
+  POST:{n:'Post',c:'#475569'},PUB:{n:'Publish',c:'#b84a76'},BIZ:{n:'Business',c:'#6b5646'}};
+const STATUS=[['backlog','Backlog'],['todo','To do'],['doing','Doing'],['review','Review'],['done','Done']];
+const PHASES=[{n:'Foundation',a:1,b:3},{n:'Pilot short',a:4,b:8},{n:'Launch & learn',a:9,b:12},{n:'Series rhythm',a:13,b:23},{n:'Season wrap',a:24,b:26}];
+const GOALS=['Lock the idea, name and tools','Write the bible, design the hero','Prove the pipeline with a 3-second test',
+ 'Script and rough boards for Ep 1','Locked storyboard and animatic','Backgrounds started, first key shots','Finish keys, paint backgrounds, record voice','Ink, composite, lock Ep 1',
+ 'Publish Ep 1, launch the channel','Read the numbers, start Ep 2','Animate Ep 2','Finish and publish Ep 2',
+ 'Ep 3: script and boards','Ep 3: animation','Ep 3: finish and publish','Ep 4: script, boards, keys','Ep 4: finish and publish',
+ 'Ep 5: script, boards, keys','Ep 5: finish and publish','Ep 6: script, boards, keys','Ep 6: finish and publish',
+ 'Finale: script, boards, keys','Finale: finish and publish','Season trailer and recap cut','Sponsor and crowdfunding pitch','Season retro and Season 2 plan'];
+const POINTS=[1,2,3,5,8];
+const N=26;
+
+function seed(){
+  const rows=[],R=(s,e,t,p,o)=>rows.push([s,e,t,p,o]);
+  R(1,'STO','Write series logline and three pillars (tone, themes, hook)',3,'a');
+  R(1,'BIZ','Pick company name and claim handles on YouTube, TikTok, Instagram',2,'a');
+  R(1,'DSN','Moodboard: palette, linework weight, lighting and camera references',3,'b');
+  R(1,'BIZ','Decide tool stack for drawing, animating, editing and audio',3,'ab');
+  R(1,'BIZ','Set up shared drive, file naming and a backup rule',2,'ab');
+  R(1,'STO','Lock format: 9:16, 60 to 90 seconds, hook in the first 2 seconds',2,'ab');
+  R(2,'STO','World bible v1: setting, rules, factions',5,'a');
+  R(2,'STO','Season arc: beat sheet for 7 episodes',5,'a');
+  R(2,'DSN','Hero turnarounds and expression sheet',5,'b');
+  R(2,'DSN','Antagonist design',3,'b');
+  R(2,'BIZ','Company agreement: roles, IP ownership, revenue split',3,'ab');
+  R(3,'DSN','Color script and palette for Ep 1',3,'b');
+  R(3,'ANI','Pipeline test: 3-second action cycle at final quality',5,'b');
+  R(3,'POST','Export test: 1080x1920 with platform safe zones',2,'a');
+  R(3,'SND','Choose music and SFX sources, note license rules',2,'a');
+  R(3,'STO','Ep 1 script v1',3,'a');
+  R(3,'BIZ','Write the per-episode "done" checklist',2,'ab');
+  R(3,'BIZ','Gate: review the pipeline test, decide go or adjust',1,'ab');
+  R(4,'STO','Ep 1 script v2 with a 2-second hook',3,'a');
+  R(4,'BRD','Ep 1 rough storyboard (vertical panels)',5,'a');
+  R(4,'SND','Scratch voice track for timing',2,'a');
+  R(4,'DSN','Props and costume sheets needed for Ep 1',3,'b');
+  R(4,'BG','Ep 1 location thumbnails',3,'b');
+  R(5,'BRD','Ep 1 clean storyboard',5,'a');
+  R(5,'BRD','Ep 1 animatic with scratch audio, timed',3,'a');
+  R(5,'BG','Ep 1 background layouts or 3D blockouts',5,'b');
+  R(5,'ANI','Ep 1 character poses per shot',5,'b');
+  R(6,'ANI','Ep 1 key animation, shots 1 to 6',8,'b');
+  R(6,'BG','Ep 1 backgrounds, first half',5,'b');
+  R(6,'SND','Cast voice actors or arrange recording',5,'a');
+  R(6,'POST','Build the Ep 1 comp template (grade, grain, impact FX)',3,'a');
+  R(7,'ANI','Ep 1 key animation, shots 7 to 12',8,'b');
+  R(7,'BG','Ep 1 backgrounds, second half',5,'b');
+  R(7,'SND','Ep 1 music and SFX pass',5,'a');
+  R(7,'SND','Record and edit Ep 1 voice',3,'a');
+  R(8,'ANI','Ep 1 in-betweens and clean-up',8,'b');
+  R(8,'POST','Ep 1 composite, color grade, FX',5,'a');
+  R(8,'POST','Ep 1 captions and safe-zone check',2,'a');
+  R(8,'PUB','Ep 1 final review and lock',2,'ab');
+  R(9,'PUB','Publish Ep 1 on Shorts, TikTok and Reels',2,'a');
+  R(9,'PUB','Launch kit: channel art, bio, pinned post, 3 teaser clips',3,'b');
+  R(9,'BIZ','Retro: hours per shot, reset the team velocity',2,'ab');
+  R(9,'STO','Ep 2 script',3,'a');
+  R(9,'BRD','Ep 2 storyboard',5,'a');
+  R(9,'DSN','Ep 2 new character or prop designs',3,'b');
+  R(10,'PUB','Review analytics: retention, drop-off, comments',2,'a');
+  R(10,'ANI','Ep 2 key animation, first half',8,'b');
+  R(10,'BG','Ep 2 backgrounds',5,'b');
+  R(10,'SND','Ep 2 scratch audio and animatic timing',3,'a');
+  R(11,'ANI','Ep 2 key animation, second half',8,'b');
+  R(11,'SND','Ep 2 voice, music, SFX',5,'a');
+  R(11,'PUB','Behind-the-scenes post: art process clip',2,'b');
+  R(12,'ANI','Ep 2 in-betweens and clean-up',5,'b');
+  R(12,'POST','Ep 2 composite, grade, captions',5,'a');
+  R(12,'PUB','Publish Ep 2 plus 3 teaser cuts',2,'a');
+  R(12,'BIZ','Retro: what to cut from the pipeline',2,'ab');
+  const ep=(lbl,s,three)=>{
+    const k=three?1:0;
+    R(s,'STO',lbl+' script with a 2-second hook',3,'a');
+    R(s,'BRD',lbl+' vertical storyboard',5,'a');
+    if(three){R(s+1,'SND',lbl+' scratch audio and animatic timing',3,'a');R(s,'DSN',lbl+' new designs and props',5,'b');}
+    R(s+k,'ANI',lbl+' key animation',8,'b');
+    R(s+1,'BG',lbl+' backgrounds',5,'b');
+    R(s+1+k,'ANI',lbl+' in-betweens and clean-up',5,'b');
+    R(s+1+k,'SND',lbl+' voice, music, SFX',3,'a');
+    R(s+1+k,'POST',lbl+' composite, grade, captions',5,'a');
+    R(s+1+k,'PUB','Publish '+lbl+' plus 3 teaser cuts',2,'a');
+  };
+  ep('Ep 3',13,true);ep('Ep 4',16,false);ep('Ep 5',18,false);ep('Ep 6',20,false);ep('Ep 7 (finale)',22,false);
+  R(24,'POST','Season trailer, 30 seconds, cut from the best shots',5,'a');
+  R(24,'PUB','Recap compilation of Ep 1 to 7 for long-form upload',3,'a');
+  R(24,'ANI','Trailer-only shot: hero key pose reveal',5,'b');
+  R(24,'DSN','Season 2 character teasers (two designs)',5,'b');
+  R(25,'BIZ','Sponsor and crowdfunding pitch deck',5,'a');
+  R(25,'BIZ','Press kit: logo, key art, one-page synopsis',3,'b');
+  R(25,'PUB','Season key art poster',5,'b');
+  R(25,'BIZ','Collect quotes for outsourcing in-betweens, color and voice',3,'a');
+  R(26,'BIZ','Season retro: what slowed us down, what to cut',3,'ab');
+  R(26,'STO','Season 2 story pitch and beat sheet',5,'a');
+  R(26,'BIZ','Season 2 budget and schedule',3,'ab');
+  R(26,'BIZ','Archive project files, back up masters',2,'b');
+  const seq={},cards=rows.map(r=>{
+    seq[r[1]]=(seq[r[1]]||0)+1;
+    return{id:r[1]+'-'+String(seq[r[1]]).padStart(3,'0'),epic:r[1],title:r[2],pts:r[3],sprint:r[0],owner:'',status:'backlog',note:'',vendor:'',cost:0,due:'',stage:'none'};
+  });
+  return{v:2,startDate:'2026-11-02',capacity:24,currency:'$',
+    people:[{name:'Mah',tag:'Mah'},{name:'Far',tag:'Far'}],cards,seq};
+}
+
+let S=seed(), sel=1, epicOn=new Set(), ownerF='all', canWrite=true, ref=null, dl=null, modalOpen=false;
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const LS='anime-board-v1';
+
+function adopt(d){
+  if(!d||!Array.isArray(d.cards)||!d.people||!(d.v>=2))return;
+  S=JSON.parse(JSON.stringify(d));S.seq=S.seq||{};
+}
+function lsGet(k){try{return localStorage.getItem(k)}catch(e){return null}}
+function lsSet(k,v){try{localStorage.setItem(k,v)}catch(e){}}
+
+/* sprint dates */
+function sprintRange(n){
+  const [y,m,d]=S.startDate.split('-').map(Number);
+  const a=new Date(y,m-1,d+14*(n-1)),b=new Date(y,m-1,d+14*(n-1)+13);
+  const f=x=>x.toLocaleDateString('en-GB',{day:'numeric',month:'short'});
+  return f(a)+' – '+f(b);
+}
+function sprintFor(date){
+  const [y,m,d]=S.startDate.split('-').map(Number);
+  const n=Math.floor((date-new Date(y,m-1,d))/(14*864e5))+1;
+  return Math.min(N,Math.max(1,n));
+}
+const phaseOf=n=>PHASES.find(p=>n>=p.a&&n<=p.b);
+const own=o=>o==='a'?S.people[0].tag:o==='b'?S.people[1].tag:o==='ab'?S.people[0].tag+'+'+S.people[1].tag:o==='out'?'Out':'–';
+const STAGES={none:'Not briefed',briefed:'Briefed',working:'In progress',delivered:'Delivered',approved:'Approved'};
+let ME=lsGet(LS+'-me')||'';
+function withMe(cb){
+  if(ME==='a'||ME==='b'){cb(ME);return}
+  openOv('<div class="modal" role="dialog" aria-modal="true" aria-label="Who are you"><h2>Who are you?</h2><p class="hint">Whoever moves a card out of Backlog becomes responsible for it. Pick which of you is using this browser.</p>'+
+    '<div class="row" style="justify-content:flex-start"><button class="btn primary" type="button" id="me-a">'+esc(S.people[0].name)+'</button><button class="btn primary" type="button" id="me-b">'+esc(S.people[1].name)+'</button><button class="btn" type="button" id="me-x">Cancel</button></div></div>');
+  const pick=m=>{ME=m;lsSet(LS+'-me',m);closeOv();cb(m)};
+  $('me-a').onclick=()=>pick('a');$('me-b').onclick=()=>pick('b');$('me-x').onclick=closeOv;
+}
+
+/* persistence */
+let saving=false,dirty=false,timer=null;
+function syncState(t,cls){const e=$('sync');e.className='sync '+(cls||'');e.lastChild.textContent=t}
+function touch(){
+  dirty=true;lsSet(LS,JSON.stringify(S));
+  if(!ref)return;
+  syncState('Saving…');clearTimeout(timer);timer=setTimeout(flush,350);
+}
+async function flush(){
+  if(saving||!dirty||!ref)return;
+  saving=true;dirty=false;timer=null;
+  try{await ref.set(JSON.parse(JSON.stringify(S)));syncState('Shared board · live','live')}
+  catch(e){dirty=true;syncState('Could not save','bad')}
+  saving=false;
+  if(dirty&&!timer)flush();
+}
+
+/* filtering */
+function inView(c){
+  if(sel==='none'){if(c.sprint)return false}else if(sel!=='all'&&c.sprint!==sel)return false;
+  if(epicOn.size&&!epicOn.has(c.epic))return false;
+  if(ownerF==='a'&&!c.owner.includes('a'))return false;
+  if(ownerF==='b'&&!c.owner.includes('b'))return false;
+  if(ownerF==='none'&&c.owner)return false;
+  if(ownerF==='out'&&c.owner!=='out')return false;
+  return true;
+}
+const viewCards=()=>S.cards.filter(inView);
+
+/* render */
+function renderPhases(){
+  const done=n=>{const cs=S.cards.filter(c=>c.sprint===n),t=cs.reduce((a,c)=>a+c.pts,0);return t?Math.round(100*cs.filter(c=>c.status==='done').reduce((a,c)=>a+c.pts,0)/t):0};
+  $('phases').innerHTML='<div class="phase"><h2>View</h2><div class="cells"><button class="cell all'+(sel==='all'?' on':'')+'" data-sp="all" type="button"><span>All</span></button><button class="cell all'+(sel==='none'?' on':'')+'" data-sp="none" type="button"><span>Unplanned</span></button></div></div>'+
+  PHASES.map(p=>'<div class="phase"><h2>'+esc(p.n)+'</h2><div class="cells">'+
+    Array.from({length:p.b-p.a+1},(_,i)=>{const n=p.a+i;return'<button class="cell'+(sel===n?' on':'')+'" style="--p:'+done(n)+'%" data-sp="'+n+'" type="button" title="Sprint '+n+' · '+sprintRange(n)+'"><span>'+n+'</span></button>'}).join('')+
+  '</div></div>').join('');
+}
+function renderSprint(){
+  const s=$('sel');
+  s.innerHTML='<option value="all">All sprints</option><option value="none">Unplanned</option>'+
+    Array.from({length:N},(_,i)=>'<option value="'+(i+1)+'">Sprint '+(i+1)+' · '+sprintRange(i+1)+'</option>').join('');
+  s.value=String(sel);
+  const num=typeof sel==='number';
+  $('prev').disabled=!num||sel<=1;$('next').disabled=!num||sel>=N;
+  $('goal').textContent=num?GOALS[sel-1]:sel==='all'?'Whole season at a glance':'Cards with no sprint yet';
+  $('meta').textContent=num?phaseOf(sel).n+' · Sprint '+sel+' of '+N+' · '+sprintRange(sel):sel==='all'?N+' sprints · '+S.cards.length+' cards':'Drag these into a sprint when you plan';
+  const cs=num?S.cards.filter(c=>c.sprint===sel):sel==='all'?S.cards:S.cards.filter(c=>!c.sprint);
+  const tot=cs.reduce((a,c)=>a+c.pts,0),dn=cs.filter(c=>c.status==='done').reduce((a,c)=>a+c.pts,0);
+  const cap=num?S.capacity:S.capacity*N;
+  const pct=x=>Math.min(100,100*x/(cap||1));
+  const per=i=>{const k=i?'b':'a';return cs.reduce((a,c)=>a+(c.owner===k?c.pts:c.owner==='ab'?c.pts/2:0),0)};
+  const lim=S.capacity/2;
+  let h='<div class="loadrow"><span>Planned '+tot+' / '+cap+' pts</span><span>Done '+dn+' pts</span><span>'+cs.length+' cards</span></div>'+
+    '<div class="bar'+(tot>cap?' over':'')+'" title="Planned vs capacity"><b style="width:'+pct(tot)+'%"></b><u style="width:'+pct(dn)+'%"></u></div>';
+  if(num||sel==='all'){
+    const l=num?lim:lim*N;
+    h+='<div class="loadrow">'+[0,1].map(i=>{const v=per(i);return'<span class="'+(v>l?'over':'')+'">'+esc(S.people[i].tag)+' '+v+' / '+l+' pts</span>'}).join('')+'</div>';
+  }
+  const sum=f=>cs.filter(f).reduce((a,c)=>a+c.pts,0);
+  h+='<div class="loadrow"><span>Outsourced '+sum(c=>c.owner==='out')+' pts</span><span>Nobody yet '+sum(c=>!c.owner)+' pts</span></div>';
+  $('load').innerHTML='<div class="kicker">Load vs capacity</div>'+h;
+}
+function renderFilters(){
+  $('filters').innerHTML=Object.entries(EPICS).map(([k,e])=>'<button class="chip'+(epicOn.has(k)?' on':'')+'" data-ep="'+k+'" type="button"><span class="tag" style="--ec:'+e.c+'">'+k+'</span>'+esc(e.n)+'</button>').join('')+
+   '<select id="ownf" aria-label="Responsible"><option value="all">Responsible: everyone</option><option value="a">'+esc(S.people[0].name)+'</option><option value="b">'+esc(S.people[1].name)+'</option><option value="out">Outsourced</option><option value="none">Nobody yet</option></select>'+
+   '<select id="me" aria-label="I am"><option value="">I am…</option><option value="a">I am '+esc(S.people[0].name)+'</option><option value="b">I am '+esc(S.people[1].name)+'</option></select>';
+  $('ownf').value=ownerF;$('me').value=ME;
+}
+function cardHtml(c,showSprint){
+  const e=EPICS[c.epic]||EPICS.BIZ,i=STATUS.findIndex(s=>s[0]===c.status);
+  return'<article class="card" draggable="'+canWrite+'" data-id="'+esc(c.id)+'" tabindex="0" aria-label="'+esc(c.title)+'">'+
+   '<div class="ctop"><span class="tag" style="--ec:'+e.c+'">'+esc(c.epic)+'</span><span>'+esc(c.id)+'</span>'+(c.sprint?'<span class="spr">S'+c.sprint+'</span>':'<span class="spr">no sprint</span>')+'</div>'+
+   '<h3>'+esc(c.title)+'</h3>'+(c.owner==='out'?'<div class="note" style="padding:0 10px 6px">Outsourced'+(c.vendor?' to '+esc(c.vendor):'')+' · '+esc(STAGES[c.stage||'none'])+'</div>':'')+(c.note?'<div class="note" style="padding:0 10px 6px">'+esc(c.note)+'</div>':'')+
+   '<div class="cbot"><span class="own" title="Owner">'+esc(own(c.owner))+'</span>'+
+   (canWrite&&i<4?'<button class="adv" data-adv="1" type="button" title="Move to '+STATUS[i+1][1]+'" aria-label="Move to '+STATUS[i+1][1]+'">›</button>':'')+
+   '<span class="pts" title="Story points">'+c.pts+'</span></div></article>';
+}
+function renderBoard(){
+  const cs=viewCards();
+  $('board').innerHTML=STATUS.map(([k,l])=>{
+    const list=cs.filter(c=>c.status===k),pts=list.reduce((a,c)=>a+c.pts,0);
+    const warn=k==='doing'&&list.length>6;
+    return'<section class="col '+k+'" data-status="'+k+'"><div class="ch'+(warn?' warn':'')+'"><h2>'+l+'</h2><span class="n">'+list.length+' · '+pts+' pts'+(warn?' · too many':'')+'</span>'+
+      (canWrite?'<button class="btn sm" data-addcol="'+k+'" type="button" aria-label="Add card to '+l+'">+</button>':'')+'</div>'+
+      '<div class="stack">'+(list.length?list.map(c=>cardHtml(c)).join(''):'<div class="empty">'+(k==='done'?'Nothing shipped yet':'Drop cards here')+'</div>')+'</div></section>';
+  }).join('');
+  $('dl-stickers').textContent='Sticker sheet ('+cs.length+')';
+}
+function renderMon(){
+  const cur=esc(S.currency||'$'),today=new Date().toLocaleDateString('en-CA');
+  const L=S.cards.filter(c=>c.owner==='out').sort((a,b)=>(a.due||'9')<(b.due||'9')?-1:(a.due||'9')>(b.due||'9')?1:0);
+  const fin=c=>c.stage==='delivered'||c.stage==='approved';
+  const late=c=>c.due&&c.due<today&&!fin(c);
+  const tot=L.reduce((a,c)=>a+(+c.cost||0),0);
+  const stat=(l,v,cls)=>'<div class="stat'+(cls?' '+cls:'')+'"><b>'+v+'</b><span>'+l+'</span></div>';
+  $('mon').innerHTML='<div class="kicker">Outsourcing monitor · whole season</div>'+
+   '<div class="stats">'+stat('outsourced cards',L.length)+stat('delivered or approved',L.filter(fin).length)+stat('overdue',L.filter(late).length,L.some(late)?'bad':'')+stat('committed cost',cur+L.reduce((a,c)=>a+(+c.cost||0),0).toLocaleString())+'</div>'+
+   (L.length?'<div class="tw"><table><thead><tr><th>Card</th><th>Vendor</th><th>Stage</th><th>Due</th><th>Cost</th><th>Sprint</th></tr></thead><tbody>'+
+    L.map(c=>'<tr data-row="'+esc(c.id)+'"><td><span class="tag" style="--ec:'+(EPICS[c.epic]||EPICS.BIZ).c+'">'+esc(c.epic)+'</span> '+esc(c.title)+'</td><td>'+(esc(c.vendor)||'<span class="note">not chosen</span>')+'</td>'+
+     '<td><select data-ostage="'+esc(c.id)+'" aria-label="Stage"'+(canWrite?'':' disabled')+'>'+opts(Object.entries(STAGES),c.stage||'none')+'</select></td>'+
+     '<td class="'+(late(c)?'late':'')+'">'+(c.due?esc(c.due)+(late(c)?' · late':''):'<span class="note">no date</span>')+'</td><td>'+(c.cost?cur+(+c.cost).toLocaleString():'–')+'</td><td>'+(c.sprint?'S'+c.sprint:'–')+'</td></tr>').join('')+
+    '</tbody></table></div>':'<div class="empty">Nothing outsourced yet. Open a card and set Responsible to Outsourced to track vendor, stage, due date and cost here.</div>');
+}
+function render(){renderPhases();renderSprint();renderFilters();renderBoard();renderMon()}
+
+/* mutations */
+function move(id,status,beforeId){
+  const c=S.cards.find(x=>x.id===id);if(!c)return;
+  if(status!=='backlog'&&!c.owner){withMe(m=>{c.owner=m;toast(S.people[m==='a'?0:1].name+' is now responsible for '+c.id);doMove(id,status,beforeId)});return}
+  doMove(id,status,beforeId);
+}
+function doMove(id,status,beforeId){
+  const i=S.cards.findIndex(c=>c.id===id);if(i<0)return;
+  const c=S.cards.splice(i,1)[0];c.status=status;
+  let j=beforeId?S.cards.findIndex(x=>x.id===beforeId):-1;
+  if(j<0){
+    // keep within the same sprint group: place after the last card of that sprint
+    let last=-1;S.cards.forEach((x,k)=>{if(x.sprint===c.sprint)last=k});
+    j=last+1||S.cards.length;
+  }
+  S.cards.splice(j,0,c);touch();render();
+}
+
+/* modal */
+function openOv(html){const o=$('ov');o.innerHTML=html;o.hidden=false;modalOpen=true}
+function closeOv(){const o=$('ov');o.hidden=true;o.innerHTML='';modalOpen=false}
+function opts(arr,val){return arr.map(([v,l])=>'<option value="'+esc(v)+'"'+(String(v)===String(val)?' selected':'')+'>'+esc(l)+'</option>').join('')}
+function editCard(id,presetStatus){
+  const c=id?S.cards.find(x=>x.id===id):{id:'',epic:'STO',title:'',pts:3,sprint:typeof sel==='number'?sel:null,owner:'',status:presetStatus||'backlog',note:'',vendor:'',cost:0,due:'',stage:'none'};
+  if(!c)return;
+  const dis=canWrite?'':' disabled';
+  openOv('<form class="modal" id="cf" role="dialog" aria-modal="true" aria-label="Card">'+
+   '<h2>'+(id?esc(c.id):'New card')+'</h2>'+
+   '<div class="fld"><label for="f-title">Title</label><input id="f-title" value="'+esc(c.title)+'" maxlength="120" required'+dis+'></div>'+
+   '<div class="grid2"><div class="fld"><label for="f-epic">Epic</label><select id="f-epic"'+dis+'>'+opts(Object.entries(EPICS).map(([k,e])=>[k,k+' · '+e.n]),c.epic)+'</select></div>'+
+   '<div class="fld"><label for="f-status">Column</label><select id="f-status"'+dis+'>'+opts(STATUS,c.status)+'</select></div>'+
+   '<div class="fld"><label for="f-sprint">Sprint</label><select id="f-sprint"'+dis+'>'+opts([['','Unplanned']].concat(Array.from({length:N},(_,i)=>[i+1,'Sprint '+(i+1)])),c.sprint||'')+'</select></div>'+
+   '<div class="fld"><label for="f-own">Responsible</label><select id="f-own"'+dis+'>'+opts([['',"Nobody yet"],['a',S.people[0].name],['b',S.people[1].name],['ab','Both of us'],['out','Outsourced']],c.owner)+'</select></div>'+
+   '<div class="fld"><label for="f-pts">Story points</label><select id="f-pts"'+dis+'>'+opts(POINTS.map(p=>[p,p]),c.pts)+'</select></div></div>'+
+   '<div class="fld"><label for="f-note">Note</label><textarea id="f-note" rows="2" maxlength="300"'+dis+'>'+esc(c.note)+'</textarea></div>'+
+   '<div class="grid2" id="outf"'+(c.owner==='out'?'':' hidden')+'>'+
+   '<div class="fld"><label for="f-vendor">Vendor or freelancer</label><input id="f-vendor" value="'+esc(c.vendor)+'" maxlength="80"'+dis+'></div>'+
+   '<div class="fld"><label for="f-stage">Outsourcing stage</label><select id="f-stage"'+dis+'>'+opts(Object.entries(STAGES),c.stage||'none')+'</select></div>'+
+   '<div class="fld"><label for="f-due">Due date</label><input id="f-due" type="date" value="'+esc(c.due)+'"'+dis+'></div>'+
+   '<div class="fld"><label for="f-cost">Quoted cost ('+esc(S.currency||'$')+')</label><input id="f-cost" type="number" min="0" step="1" value="'+(+c.cost||0)+'"'+dis+'></div></div>'+
+   '<p class="hint">Moving a card out of Backlog makes whoever moves it responsible. Points: 1 is an hour or two, 3 is a day, 5 is two days, 8 is most of a week.</p>'+
+   '<div class="row">'+(canWrite&&id?'<button class="btn danger" type="button" id="f-del" style="margin-right:auto">Delete</button>':'')+
+   '<button class="btn" type="button" id="f-cancel">'+(canWrite?'Cancel':'Close')+'</button>'+(canWrite?'<button class="btn primary" type="submit">Save</button>':'')+'</div></form>');
+  const f=$('cf');
+  f.onsubmit=e=>{
+    e.preventDefault();if(!canWrite)return;
+    const t=$('f-title').value.trim();if(!t)return;
+    const d={title:t,epic:$('f-epic').value,status:$('f-status').value,sprint:+$('f-sprint').value||null,owner:$('f-own').value,pts:+$('f-pts').value,note:$('f-note').value.trim(),
+      vendor:$('f-vendor').value.trim(),cost:+$('f-cost').value||0,due:$('f-due').value,stage:$('f-stage').value};
+    const fin=()=>{
+      if(id){Object.assign(c,d)}
+      else{S.seq[d.epic]=(S.seq[d.epic]||0)+1;Object.assign(c,d,{id:d.epic+'-'+String(S.seq[d.epic]).padStart(3,'0')});S.cards.push(c)}
+      touch();closeOv();render();
+    };
+    if(d.status!=='backlog'&&!d.owner)withMe(m=>{d.owner=m;fin()});else fin();
+  };
+  $('f-cancel').onclick=closeOv;
+  const del=$('f-del');
+  if(del)del.onclick=()=>{
+    if(del.dataset.arm){S.cards=S.cards.filter(x=>x.id!==id);touch();closeOv();render()}
+    else{del.dataset.arm=1;del.textContent='Click again to delete';setTimeout(()=>{if(del.isConnected){delete del.dataset.arm;del.textContent='Delete'}},3000)}
+  };
+  setTimeout(()=>{const t=$('f-title');t&&t.focus()},0);
+}
+function settingsModal(){
+  const dis=canWrite?'':' disabled';
+  openOv('<form class="modal" id="sf" role="dialog" aria-modal="true" aria-label="Settings"><h2>Settings</h2>'+
+   '<div class="grid2"><div class="fld"><label for="s-n0">Person 1</label><input id="s-n0" value="'+esc(S.people[0].name)+'"'+dis+'></div>'+
+   '<div class="fld"><label for="s-t0">Tag on cards</label><input id="s-t0" value="'+esc(S.people[0].tag)+'" maxlength="3"'+dis+'></div>'+
+   '<div class="fld"><label for="s-n1">Person 2</label><input id="s-n1" value="'+esc(S.people[1].name)+'"'+dis+'></div>'+
+   '<div class="fld"><label for="s-t1">Tag on cards</label><input id="s-t1" value="'+esc(S.people[1].tag)+'" maxlength="3"'+dis+'></div>'+
+   '<div class="fld"><label for="s-start">Sprint 1 starts</label><input id="s-start" type="date" value="'+esc(S.startDate)+'"'+dis+'></div>'+
+   '<div class="fld"><label for="s-cap">Points per sprint (both of you)</label><input id="s-cap" type="number" min="4" max="80" value="'+S.capacity+'"'+dis+'></div>'+
+   '<div class="fld"><label for="s-cur">Currency symbol</label><input id="s-cur" value="'+esc(S.currency||'$')+'" maxlength="4"'+dis+'></div></div>'+
+   '<p class="hint">Sprints are two weeks. The board stays shared: both of you see changes live.</p>'+
+   '<div class="row">'+(canWrite?'<button class="btn danger" type="button" id="s-reset" style="margin-right:auto">Reset to template</button>':'')+
+   '<button class="btn" type="button" id="s-cancel">'+(canWrite?'Cancel':'Close')+'</button>'+(canWrite?'<button class="btn primary" type="submit">Save</button>':'')+'</div></form>');
+  $('s-cancel').onclick=closeOv;
+  $('sf').onsubmit=e=>{
+    e.preventDefault();if(!canWrite)return;
+    S.people[0]={name:$('s-n0').value.trim()||'Mah',tag:$('s-t0').value.trim()||'Mah'};
+    S.people[1]={name:$('s-n1').value.trim()||'Far',tag:$('s-t1').value.trim()||'Far'};
+    S.currency=$('s-cur').value.trim()||'$';
+    if($('s-start').value)S.startDate=$('s-start').value;
+    S.capacity=Math.max(4,+$('s-cap').value||24);
+    touch();closeOv();render();
+  };
+  const r=$('s-reset');
+  if(r)r.onclick=()=>{
+    if(r.dataset.arm){S=seed();touch();closeOv();render();toast('Board reset to the template')}
+    else{r.dataset.arm=1;r.textContent='Click again: erases all changes';setTimeout(()=>{if(r.isConnected){delete r.dataset.arm;r.textContent='Reset to template'}},3500)}
+  };
+}
+let tt;function toast(m){const t=$('toast');t.textContent=m;t.hidden=false;clearTimeout(tt);tt=setTimeout(()=>t.hidden=true,2600)}
+
+/* events */
+document.addEventListener('click',e=>{
+  const t=e.target;
+  if(t.closest('select')||t.closest('input'))return;
+  const rw=t.closest('[data-row]');if(rw){editCard(rw.dataset.row);return}
+  const sp=t.closest('[data-sp]');if(sp){const v=sp.dataset.sp;sel=v==='all'||v==='none'?v:+v;lsSet(LS+'-sel',String(sel));render();return}
+  const ep=t.closest('[data-ep]');if(ep){const k=ep.dataset.ep;epicOn.has(k)?epicOn.delete(k):epicOn.add(k);render();return}
+  const adv=t.closest('[data-adv]');if(adv){const c=S.cards.find(x=>x.id===adv.closest('.card').dataset.id);const i=STATUS.findIndex(s=>s[0]===c.status);move(c.id,STATUS[i+1][0]);return}
+  const ac=t.closest('[data-addcol]');if(ac){editCard(null,ac.dataset.addcol);return}
+  const cd=t.closest('.card');if(cd){editCard(cd.dataset.id);return}
+  if(t===$('ov'))closeOv();
+});
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'&&modalOpen)closeOv();
+  if(e.key==='Enter'&&e.target.classList&&e.target.classList.contains('card'))editCard(e.target.dataset.id);
+});
+document.addEventListener('change',e=>{
+  if(e.target.id==='sel'){const v=e.target.value;sel=v==='all'||v==='none'?v:+v;lsSet(LS+'-sel',String(sel));render()}
+  if(e.target.id==='f-own'){$('outf').hidden=e.target.value!=='out'}
+  if(e.target.id==='me'){ME=e.target.value;lsSet(LS+'-me',ME)}
+  if(e.target.dataset&&e.target.dataset.ostage){const c=S.cards.find(x=>x.id===e.target.dataset.ostage);if(c&&canWrite){c.stage=e.target.value;touch();renderMon()}}
+  if(e.target.id==='ownf'){ownerF=e.target.value;renderBoard();renderSprint()}
+});
+$('prev').onclick=()=>{if(typeof sel==='number'&&sel>1){sel--;lsSet(LS+'-sel',String(sel));render()}};
+$('next').onclick=()=>{if(typeof sel==='number'&&sel<N){sel++;lsSet(LS+'-sel',String(sel));render()}};
+$('add').onclick=()=>editCard(null);
+$('settings').onclick=settingsModal;
+
+let dragId=null;
+document.addEventListener('dragstart',e=>{const c=e.target.closest&&e.target.closest('.card');if(!c||!canWrite)return;dragId=c.dataset.id;c.classList.add('drag');e.dataTransfer.effectAllowed='move';try{e.dataTransfer.setData('text/plain',dragId)}catch(x){}});
+document.addEventListener('dragend',()=>{dragId=null;document.querySelectorAll('.drag,.over').forEach(x=>x.classList.remove('drag','over'))});
+document.addEventListener('dragover',e=>{const col=e.target.closest&&e.target.closest('.col');if(!col||!dragId)return;e.preventDefault();document.querySelectorAll('.col.over').forEach(x=>x!==col&&x.classList.remove('over'));col.classList.add('over')});
+document.addEventListener('drop',e=>{
+  const col=e.target.closest&&e.target.closest('.col');if(!col||!dragId)return;
+  e.preventDefault();
+  const tgt=e.target.closest('.card');
+  move(dragId,col.dataset.status,tgt&&tgt.dataset.id!==dragId?tgt.dataset.id:null);dragId=null;
+});
+
+/* downloads: printable sticker sheet and wall board */
+function stickerDoc(cards){
+  const per=24,pages=[];
+  for(let i=0;i<cards.length;i+=per)pages.push(cards.slice(i,i+per));
+  const st=c=>{const e=EPICS[c.epic]||EPICS.BIZ;
+    return'<div class="st" style="--c:'+e.c+'"><div class="hd"><span>'+esc(c.epic)+' · '+esc(e.n)+'</span><span>'+esc(c.id)+'</span></div><div class="t">'+esc(c.title)+'</div>'+
+    '<div class="ft"><span class="o">'+esc(own(c.owner))+'</span><span class="s">'+(c.sprint?'Sprint '+c.sprint:'No sprint')+'</span><span class="p">'+c.pts+'</span><span class="bx"></span></div></div>'};
+  return'<!doctype html><html><head><meta charset="utf-8"><title>Sticker sheet</title><style>'+
+  '@page{size:A4;margin:0}*{box-sizing:border-box}body{margin:0;background:#ddd;font-family:"Segoe UI",Arial,sans-serif;color:#15171c;-webkit-print-color-adjust:exact;print-color-adjust:exact}'+
+  '.note{font:13px/1.4 sans-serif;padding:10px 16px;background:#fff}@media print{.note{display:none}body{background:#fff}}'+
+  '.sheet{width:210mm;height:297mm;margin:0 auto 8px;background:#fff;display:grid;grid-template-columns:repeat(3,70mm);grid-template-rows:repeat(8,37mm);overflow:hidden;page-break-after:always;break-after:page}'+
+  '.st{width:70mm;height:37mm;border:.2mm dashed #aaa;padding:0 0 2.5mm;display:flex;flex-direction:column;overflow:hidden}'+
+  '.hd{background:var(--c);color:#fff;font:700 7.5pt/1 "Consolas",monospace;letter-spacing:.06em;padding:1.6mm 3.5mm;display:flex;justify-content:space-between;text-transform:uppercase}'+
+  '.t{flex:1;font-weight:700;font-size:10.5pt;line-height:1.2;padding:2.2mm 3.5mm 0;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}'+
+  '.ft{display:flex;align-items:center;gap:2.5mm;padding:0 3.5mm;font:600 8pt "Consolas",monospace}'+
+  '.o{border:.4mm solid #15171c;border-radius:4mm;padding:.2mm 1.8mm}.s{color:#555}.p{margin-left:auto;font:800 14pt/1 Arial Narrow,Arial,sans-serif;border-bottom:.5mm solid #15171c}.bx{width:4.5mm;height:4.5mm;border:.4mm solid #15171c}'+
+  '</style></head><body><div class="note">Print at 100% scale on A4. Labels are 70 × 37 mm, 24 per sheet (fits Zweckform 3474 or similar). '+cards.length+' stickers. Print on plain paper and cut along the dashed lines if you do not have label sheets.</div>'+
+  pages.map(p=>'<div class="sheet">'+p.map(st).join('')+'</div>').join('')+'</body></html>';
+}
+function wallDoc(){
+  const n=typeof sel==='number'?sel:null;
+  const lanes=[S.people[0],S.people[1],{tag:'Out',name:'Outsourced'}];
+  const colsHd=[['To do',''],['Doing','Max 3 each'],['Review',''],['Done','']];
+  const legend=Object.entries(EPICS).map(([k,e])=>'<span class="lg"><b style="background:'+e.c+'">'+k+'</b>'+esc(e.n)+'</span>').join('');
+  return'<!doctype html><html><head><meta charset="utf-8"><title>Wall board</title><style>'+
+  '@page{size:A3 landscape;margin:0}*{box-sizing:border-box}body{margin:0;font-family:"Segoe UI",Arial,sans-serif;color:#15171c;background:#ccc;-webkit-print-color-adjust:exact;print-color-adjust:exact}'+
+  '.note{font:13px/1.4 sans-serif;padding:10px 16px;background:#fff}@media print{.note{display:none}body{background:#fff}}'+
+  '.page{width:420mm;height:297mm;margin:0 auto;background:#fff;padding:10mm;display:flex;flex-direction:column;gap:5mm}'+
+  '.top{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:1.2mm solid #15171c;padding-bottom:3mm}'+
+  'h1{margin:0;font:800 34pt/1 "Arial Narrow",Impact,sans-serif;text-transform:uppercase;letter-spacing:.02em}'+
+  '.sp{font:600 14pt "Consolas",monospace}.goal{font-size:12pt;margin-top:2mm}.line{display:inline-block;border-bottom:.3mm solid #15171c;min-width:120mm}'+
+  '.grid{flex:1;display:grid;grid-template-columns:24mm repeat(4,1fr);grid-template-rows:12mm 1fr 1fr 1fr;gap:0;border:.6mm solid #15171c}'+
+  '.grid>div{border:.25mm solid #15171c;padding:2mm}'+
+  '.h{background:#15171c;color:#fff;font:800 15pt "Arial Narrow",Impact,sans-serif;text-transform:uppercase;letter-spacing:.06em;display:flex;align-items:center;justify-content:space-between}.h small{font:600 8pt "Consolas",monospace;letter-spacing:0}'+
+  '.l{background:#e8e9ec;writing-mode:vertical-rl;transform:rotate(180deg);font:700 11pt "Arial Narrow",Arial,sans-serif;text-align:center;display:flex;align-items:center;justify-content:center}'+
+  '.l b{font:800 24pt "Arial Narrow",Impact,sans-serif}'+
+  '.legend{display:flex;flex-wrap:wrap;gap:3mm 6mm;font-size:9pt;align-items:center}.lg{display:flex;gap:1.5mm;align-items:center}.lg b{color:#fff;font:700 8pt "Consolas",monospace;padding:.8mm 2mm}'+
+  '.foot{font-size:9pt;color:#555}</style></head><body><div class="note">Print on A3 landscape at 100% scale. Stick the 70 × 37 mm stickers inside the cells: three fit in a column per cell. Keep the backlog in a folder, sorted by sprint.</div>'+
+  '<div class="page"><div class="top"><div><h1>Anime Shorts · Sprint board</h1><div class="goal">Goal: '+(n?esc(GOALS[n-1]):'<span class="line"></span>')+'</div></div>'+
+  '<div class="sp">Sprint '+(n?n+' · '+esc(sprintRange(n)):'____  ·  ____ → ____')+'</div></div>'+
+  '<div class="grid"><div class="h"></div>'+colsHd.map(c=>'<div class="h"><span>'+c[0]+'</span><small>'+c[1]+'</small></div>').join('')+
+  lanes.map(p=>'<div class="l"><span><b>'+esc(p.tag)+'</b> '+esc(p.name)+'</span></div><div></div><div></div><div></div><div></div>').join('')+'</div>'+
+  '<div class="legend">'+legend+'</div><div class="foot">Sticker corner number = story points. Capacity: '+S.capacity+' points per sprint for both of you.</div></div></body></html>';
+}
+async function save(name,html){
+  try{const r=await dl.save({filename:name,data:html});toast(r.status==='saved'?'Saved '+name:'Sent')}
+  catch(e){if(e&&e.code!=='declined')toast('Could not save the file')}
+}
+$('dl-stickers').onclick=()=>save('stickers.html',stickerDoc(viewCards()));
+$('dl-wall').onclick=()=>save('wall-board.html',wallDoc());
+
+/* boot */
+(function init(){
+  const stored=lsGet(LS);if(stored){try{adopt(JSON.parse(stored))}catch(e){}}
+  const ss=lsGet(LS+'-sel');
+  if(ss)sel=ss==='all'||ss==='none'?ss:Math.min(N,Math.max(1,+ss||1));else sel=sprintFor(new Date());
+  render();syncState('Saved in this browser only');
+  canWrite=true;
+  dl={save:async({filename,data})=>{
+    const type=filename.endsWith('.json')?'application/json':'text/html';
+    const u=URL.createObjectURL(new Blob([data],{type}));
+    const a=document.createElement('a');a.href=u;a.download=filename;document.body.appendChild(a);a.click();a.remove();
+    setTimeout(()=>URL.revokeObjectURL(u),2000);return{status:'saved'};
+  }};
+  ['dl-stickers','dl-wall','exp','imp'].forEach(id=>$(id).hidden=false);
+  $('exp').onclick=()=>dl.save({filename:'anime-board-backup.json',data:JSON.stringify(S,null,1)});
+  $('imp').onclick=()=>$('impf').click();
+  $('impf').onchange=async e=>{
+    const f=e.target.files[0];if(!f)return;
+    try{const d=JSON.parse(await f.text());if(!d.cards||!d.people||!(d.v>=2))throw 0;adopt(d);touch();render();toast('Backup imported')}
+    catch(x){toast('That file is not a board backup')}
+    e.target.value='';
+  };
+  const cfg=window.BOARD_CONFIG;
+  if(cfg&&cfg.firebase&&cfg.boardId){
+    const load=src=>new Promise((res,rej)=>{const s=document.createElement('script');s.src=src;s.onload=res;s.onerror=rej;document.head.appendChild(s)});
+    (async()=>{
+      try{
+        const base='https://www.gstatic.com/firebasejs/10.12.2/';
+        await load(base+'firebase-app-compat.js');await load(base+'firebase-firestore-compat.js');
+        firebase.initializeApp(cfg.firebase);
+        const d=firebase.firestore().doc('boards/'+cfg.boardId);
+        ref={set:o=>d.set(o)};
+        syncState('Connecting…');
+        d.onSnapshot(s=>{
+          if(s.metadata.hasPendingWrites||dirty||saving)return;
+          if(s.exists){adopt(s.data());if(!modalOpen)render()}
+          else{dirty=true;flush()}
+          syncState('Shared board · live','live');
+        },()=>syncState('Offline','bad'));
+      }catch(e){ref=null;syncState('Saved in this browser only','bad')}
+    })();
+  }
+})();
+</script>
+</body></html>
